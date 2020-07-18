@@ -19,6 +19,9 @@ package com.example.background
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import com.example.background.workers.BlurWorker
 
 /**
  * [AndroidViewModel] subclass for [BlurActivity].
@@ -35,12 +38,19 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
     // URI to the Output Blurred Image file
     internal var outputUri: Uri? = null
 
+    // Instance of WorkManager
+    private val workManager = WorkManager.getInstance(application)
+
     /**
      * Create the WorkRequest to apply the blur and save the resulting image
      *
      * @param blurLevel The amount to blur the image
      */
-    internal fun applyBlur(blurLevel: Int) {}
+    internal fun applyBlur(blurLevel: Int) {
+        // Create a one-off work request for applying the Blur filter on the Image
+        // and schedule it with WorkManager
+        workManager.enqueue(OneTimeWorkRequest.from(BlurWorker::class.java))
+    }
 
     /**
      * Parses and converts [uriString] into [Uri] instance.
