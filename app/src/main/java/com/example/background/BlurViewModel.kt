@@ -19,8 +19,10 @@ package com.example.background
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
-import androidx.work.OneTimeWorkRequest
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.example.background.workers.BlurWorker
 
 /**
@@ -48,8 +50,12 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
      */
     internal fun applyBlur(blurLevel: Int) {
         // Create a one-off work request for applying the Blur filter on the Image
-        // and schedule it with WorkManager
-        workManager.enqueue(OneTimeWorkRequest.from(BlurWorker::class.java))
+        val blurRequest = OneTimeWorkRequestBuilder<BlurWorker>()
+                .setInputData(createInputDataForUri())
+                .build()
+
+        // Schedule it with WorkManager
+        workManager.enqueue(blurRequest)
     }
 
     /**
@@ -73,4 +79,12 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
     internal fun setOutputUri(outputImageUri: String?) {
         outputUri = uriOrNull(outputImageUri)
     }
+
+    /**
+     * Creates and returns the input [Data] object containing
+     * the [imageUri] of the Image to operate on.
+     */
+    private fun createInputDataForUri(): Data = workDataOf(
+            KEY_IMAGE_URI to imageUri.toString()
+    )
 }

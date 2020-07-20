@@ -2,9 +2,11 @@ package com.example.background.workers
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.example.background.R
+import androidx.work.workDataOf
+import com.example.background.KEY_IMAGE_URI
 import timber.log.Timber
 
 /**
@@ -38,12 +40,26 @@ class BlurWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
         // Get App Context
         val appContext = applicationContext
 
+        // Get the Input Data sent
+        val pictureToBlurUriStr = inputData.getString(KEY_IMAGE_URI)
+
         // Show a Notification before starting the work for blurring the image
         makeStatusNotification("Blurring Image...", appContext)
 
         return try {
+            // If the Uri of the Image to be blurred is invalid/empty, then log the error
+            // and throw an exception
+            if (pictureToBlurUriStr.isNullOrEmpty()) {
+                Timber.e("Invalid input Uri $pictureToBlurUriStr")
+                throw IllegalArgumentException("Invalid input Uri $pictureToBlurUriStr")
+            }
+
+            // Get the ContentResolver instance
+            val contentResolver = appContext.contentResolver
+
             // Get the Picture to be blurred
-            val pictureToBlur = BitmapFactory.decodeResource(appContext.resources, R.drawable.test)
+            val pictureToBlur = BitmapFactory
+                    .decodeStream(contentResolver.openInputStream(Uri.parse(pictureToBlurUriStr)))
 
             // Apply the blur filter on the Image
             val blurredPicture = blurBitmap(pictureToBlur, appContext)
@@ -54,8 +70,10 @@ class BlurWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
             // Show a Notification to display the File URI to Blurred Image file
             makeStatusNotification("Blurred Image saved to $blurredPictureUri", appContext)
 
-            // Return as successful
-            Result.success()
+            // Return as successful with the output Data containing the Uri
+            // to the temporary blurred image file, in order to make it available
+            // to other workers for further operations
+            Result.success(workDataOf(KEY_IMAGE_URI to blurredPictureUri.toString()))
         } catch (throwable: Throwable) {
             // Log the error
             Timber.e(throwable, "Error occurred while applying blur")
