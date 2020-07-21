@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.example.background.KEY_BLUR_LEVEL
 import com.example.background.KEY_IMAGE_URI
 import timber.log.Timber
 
@@ -43,8 +44,14 @@ class BlurWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
         // Get the Input Data sent
         val pictureToBlurUriStr = inputData.getString(KEY_IMAGE_URI)
 
+        // Get the level of Blur to be applied
+        val blurLevel = inputData.getInt(KEY_BLUR_LEVEL, 1)
+
         // Show a Notification before starting the work for blurring the image
-        makeStatusNotification("Blurring Image...", appContext)
+        makeStatusNotification(appContext, "Blurring Image...")
+
+        // Slow down the start so that it is easier to see each WorkRequest start
+        sleep()
 
         return try {
             // If the Uri of the Image to be blurred is invalid/empty, then log the error
@@ -62,13 +69,10 @@ class BlurWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
                     .decodeStream(contentResolver.openInputStream(Uri.parse(pictureToBlurUriStr)))
 
             // Apply the blur filter on the Image
-            val blurredPicture = blurBitmap(pictureToBlur, appContext)
+            val blurredPicture = blurBitmap(appContext, pictureToBlur, blurLevel)
 
             // Write the result to a temporary image file
             val blurredPictureUri = writeBitmapToFile(appContext, blurredPicture)
-
-            // Show a Notification to display the File URI to Blurred Image file
-            makeStatusNotification("Blurred Image saved to $blurredPictureUri", appContext)
 
             // Return as successful with the output Data containing the Uri
             // to the temporary blurred image file, in order to make it available

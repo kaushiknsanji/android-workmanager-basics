@@ -19,11 +19,10 @@ package com.example.background
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
+import androidx.work.*
 import com.example.background.workers.BlurWorker
+import com.example.background.workers.CleanupWorker
+import com.example.background.workers.SaveImageToFileWorker
 
 /**
  * [AndroidViewModel] subclass for [BlurActivity].
@@ -49,13 +48,24 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
      * @param blurLevel The amount to blur the image
      */
     internal fun applyBlur(blurLevel: Int) {
+        // Create a one-off work request for cleaning any temporary image files
+        val cleanUpRequest = OneTimeWorkRequest.from(CleanupWorker::class.java)
+
         // Create a one-off work request for applying the Blur filter on the Image
+        // with the blur level specified
         val blurRequest = OneTimeWorkRequestBuilder<BlurWorker>()
-                .setInputData(createInputDataForUri())
+                // Input Data containing the Image to blur and the blur level to apply
+                .setInputData(createInputDataForUri(blurLevel))
                 .build()
 
-        // Schedule it with WorkManager
-        workManager.enqueue(blurRequest)
+        // Create a one-off work request for saving the blurred image to MediaStore filesystem
+        val saveImageToFileRequest = OneTimeWorkRequest.from(SaveImageToFileWorker::class.java)
+
+        // Execute clean up first
+        workManager.beginWith(cleanUpRequest)
+                .then(blurRequest) // then, blur the selected image
+                .then(saveImageToFileRequest) // then, save the blurred image
+                .enqueue() // enqueue and schedule the chain of work in the background thread
     }
 
     /**
@@ -83,8 +93,13 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Creates and returns the input [Data] object containing
      * the [imageUri] of the Image to operate on.
+     *
+     * @param blurLevel The amount to blur the image
      */
-    private fun createInputDataForUri(): Data = workDataOf(
-            KEY_IMAGE_URI to imageUri.toString()
+    private fun createInputDataForUri(blurLevel: Int): Data = workDataOf(
+            // Uri to the Image to be blurred
+            KEY_IMAGE_URI to imageUri.toString(),
+            // Level of blur to be applied on the Image
+            KEY_BLUR_LEVEL to blurLevel
     )
 }

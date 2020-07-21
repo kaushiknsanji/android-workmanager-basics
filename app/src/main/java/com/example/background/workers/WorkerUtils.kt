@@ -22,8 +22,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import androidx.annotation.WorkerThread
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -36,6 +38,7 @@ import timber.log.Timber
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -44,10 +47,10 @@ import java.util.*
  * For this codelab, this is used to show a notification so that you know when different steps
  * of the background work chain are starting
  *
+ * @param context [Context] needed for adding Notification Channel and creating the Notification.
  * @param message Message shown on the notification
- * @param context Context needed to create Toast
  */
-fun makeStatusNotification(message: String, context: Context) {
+fun makeStatusNotification(context: Context, message: String) {
 
     // Make a channel if necessary
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -83,51 +86,88 @@ fun makeStatusNotification(message: String, context: Context) {
 fun sleep() {
     try {
         Thread.sleep(DELAY_TIME_MILLIS, 0)
-    } catch (e: InterruptedException) {
-        Timber.e(e.message)
+    } catch (exception: InterruptedException) {
+        Timber.e(exception)
     }
 }
 
 /**
- * Blurs the given Bitmap image
- * @param bitmap Image to blur
- * @param applicationContext Application context
- * @return Blurred bitmap image
+ * Blurs the given Bitmap image with the [blurLevel] specified.
+ * @param applicationContext Application [Context] to initialize [RenderScript]
+ * @param bitmapToBlur [Bitmap] Image to blur
+ * @param blurLevel The amount to blur the image
+ * @return Blurred [Bitmap] image
  */
 @WorkerThread
-fun blurBitmap(bitmap: Bitmap, applicationContext: Context): Bitmap {
-    lateinit var rsContext: RenderScript
+fun blurBitmap(applicationContext: Context, bitmapToBlur: Bitmap, blurLevel: Int): Bitmap {
+    // Initialize the Renderscript
+    val rsContext: RenderScript = RenderScript.create(applicationContext, RenderScript.ContextType.DEBUG)
+    // Initialize the Blur script with the data element for ARGB Pixel data
+    val scriptIntrinsicBlur = ScriptIntrinsicBlur.create(rsContext, Element.U8_4(rsContext)).apply {
+        // Set the radius of the Gaussian Blur to apply
+        setRadius(10f)
+    }
+
     try {
-        // Create the output bitmap
-        val output = Bitmap.createBitmap(
-                bitmap.width, bitmap.height, bitmap.config)
+        // Saves the final result of blur on the "bitmapToBlur" image
+        var blurredBitmap = bitmapToBlur
 
-        // Initialize the Renderscript
-        rsContext = RenderScript.create(applicationContext, RenderScript.ContextType.DEBUG)
-
-        // Create Allocations for Renderscript to run
-        val inAlloc = Allocation.createFromBitmap(rsContext, bitmap)
-        val outAlloc = Allocation.createTyped(rsContext, inAlloc.type)
-
-        // Initialize the Blur script with the data element for ARGB Pixel data
-        val theIntrinsic = ScriptIntrinsicBlur.create(rsContext, Element.U8_4(rsContext))
-
-        theIntrinsic.apply {
-            // Set the radius of the Gaussian Blur to apply
-            setRadius(10f)
-            // Set the Allocation input for the Blur script
-            theIntrinsic.setInput(inAlloc)
-            // Execute the Blur process
-            theIntrinsic.forEach(outAlloc)
+        // Repeat blur filter application for the number of blur levels
+        repeat(blurLevel) {
+            // Execute the blur and save the result
+            blurredBitmap = doBlurBitmap(
+                    rsContext,
+                    scriptIntrinsicBlur,
+                    blurredBitmap
+            )
         }
-        // Copy the result to the output bitmap
-        outAlloc.copyTo(output)
+
         // Return the blurred bitmap
-        return output
+        return blurredBitmap
     } finally {
         // Release the resources held by RenderScript
         rsContext.finish()
     }
+}
+
+/**
+ * Invoked by [.blurBitmap] multiple times based on the `blurLevel` chosen by the user.
+ * Gaussian blur on the [bitmapToBlur] image is applied that many times.
+ *
+ * @param rsContext Pre-initialized [RenderScript] instance to create [Allocation]s
+ * @param scriptIntrinsicBlur Pre-initialized [ScriptIntrinsicBlur] instance to execute blur
+ * @param bitmapToBlur [Bitmap] Image to blur
+ * @return Blurred [Bitmap] image
+ */
+private fun doBlurBitmap(rsContext: RenderScript,
+                         scriptIntrinsicBlur: ScriptIntrinsicBlur,
+                         bitmapToBlur: Bitmap): Bitmap {
+    // Create the output bitmap that will hold the blurred image
+    val blurredBitmap = bitmapToBlur.copy(bitmapToBlur.config, true)
+
+    // Create Allocations for Renderscript to run
+    val inAlloc = Allocation.createFromBitmap(rsContext, bitmapToBlur)
+    val outAlloc = Allocation.createTyped(rsContext, inAlloc.type)
+
+    scriptIntrinsicBlur.apply {
+        // Set the Allocation input for the Blur script
+        scriptIntrinsicBlur.setInput(inAlloc)
+        // Execute the Blur process
+        scriptIntrinsicBlur.forEach(outAlloc)
+    }
+
+    // Copy the result to the output bitmap
+    outAlloc.copyTo(blurredBitmap)
+
+    // Recycle the "bitmapToBlur" as we are returning a new one
+    bitmapToBlur.recycle()
+
+    // Release resources held by allocations only
+    inAlloc.destroy()
+    outAlloc.destroy()
+
+    // Return the blurred bitmap
+    return blurredBitmap
 }
 
 /**
@@ -157,4 +197,65 @@ fun writeBitmapToFile(applicationContext: Context, bitmap: Bitmap): Uri {
 
     // Return the File URI to the above PNG file
     return Uri.fromFile(outputFile)
+}
+
+/**
+ * Deletes all temporary image (PNG) files, previously created for capturing
+ * the blurred version of the original image, present in the
+ * "blur_filter_outputs" subdirectory of the Application's "files" directory.
+ *
+ * @param applicationContext Application [Context] to access Application's "files" directory.
+ */
+fun cleanUpTempFiles(applicationContext: Context) {
+    // Output Directory where the temporary image files are present
+    val outputDir = File(applicationContext.filesDir, OUTPUT_PATH)
+    // Check if the Output Directory exists
+    if (outputDir.exists()) {
+        // When the Output Directory exists
+        // Get all PNG files in the folder and delete them
+        outputDir.listFiles()?.forEach { file: File? ->
+            file?.takeIf { it.name.isNotEmpty() && it.name.endsWith(".png") }?.run {
+                // Delete the temporary PNG file
+                val isFileDeleted = delete()
+                // Log the delete result
+                Timber.i("Deleted $name - $isFileDeleted")
+            }
+        }
+    }
+}
+
+/**
+ * Saves the Image pointed to by the given [bitmapToSaveUriStr],
+ * to the device's MediaStore filesystem (like "Pictures" folder).
+ *
+ * @param applicationContext Application [Context] to get the [android.content.ContentResolver]
+ * to decode the [bitmapToSaveUriStr]
+ * @param bitmapToSaveUriStr [String] containing the URI to the Image to be saved to the Media Images.
+ * @return [String] containing the URI to the newly created image; or `null` if [bitmapToSaveUriStr]
+ * was `null` or empty, or if the image failed to be stored for any reason.
+ * @throws FileNotFoundException if the provided [bitmapToSaveUriStr] could not be opened.
+ */
+@Throws(FileNotFoundException::class)
+fun saveImageToMedia(applicationContext: Context, bitmapToSaveUriStr: String?): String? {
+    // Do not do anything if the Uri string is invalid or empty
+    if (bitmapToSaveUriStr.isNullOrEmpty()) return null
+
+    // Get the ContentResolver instance
+    val contentResolver = applicationContext.contentResolver
+
+    // Get the Bitmap to be saved from the given Uri
+    val bitmapToSave = BitmapFactory.decodeStream(
+            contentResolver.openInputStream(Uri.parse(bitmapToSaveUriStr))
+    )
+
+    // Get the Date Formatter
+    val dateFormatter = SimpleDateFormat(DATE_FORMAT, Locale.getDefault())
+
+    // Write the Image file to MediaStore filesystem and return its Uri String
+    return MediaStore.Images.Media.insertImage(
+            contentResolver,
+            bitmapToSave,
+            TITLE_IMAGE,
+            dateFormatter.format(Date())
+    )
 }
