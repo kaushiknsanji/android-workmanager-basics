@@ -62,7 +62,11 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
         val saveImageToFileRequest = OneTimeWorkRequest.from(SaveImageToFileWorker::class.java)
 
         // Execute clean up first
-        workManager.beginWith(cleanUpRequest)
+        workManager.beginUniqueWork(
+                IMAGE_MANIPULATION_WORK_NAME, // A unique name identifying this chain of work
+                ExistingWorkPolicy.REPLACE, // stop and replace the current work chain if any
+                cleanUpRequest
+        )
                 .then(blurRequest) // then, blur the selected image
                 .then(saveImageToFileRequest) // then, save the blurred image
                 .enqueue() // enqueue and schedule the chain of work in the background thread
