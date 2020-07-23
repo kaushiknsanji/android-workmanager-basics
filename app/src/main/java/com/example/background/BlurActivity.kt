@@ -20,6 +20,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import com.bumptech.glide.Glide
 import com.example.background.databinding.ActivityBlurBinding
 
@@ -57,6 +58,28 @@ class BlurActivity : AppCompatActivity() {
             // Delegate to the ViewModel to apply the Blur filter on the Image with the chosen Blur level
             viewModel.applyBlur(blurLevel)
         }
+
+        // Register an observer on the SaveToImageFileWorker's WorkInfo objects LiveData to retrieve
+        // its status and output Data
+        viewModel.outputWorkInfos.observe(this, Observer { workInfos ->
+            if (!workInfos.isNullOrEmpty()) {
+                // When WorkInfo Objects are generated
+
+                // Pick the first WorkInfo object. There will be only one WorkInfo object
+                // since the corresponding WorkRequest that was tagged is part of a unique work chain
+                val workInfo = workInfos[0]
+
+                // Check the work status
+                if (workInfo.state.isFinished) {
+                    // When the work is finished (i.e., SUCCEEDED / FAILED / CANCELLED),
+                    // show and hide the appropriate views for the same
+                    showWorkFinished()
+                } else {
+                    // In other cases, show and hide the appropriate views for the same
+                    showWorkInProgress()
+                }
+            }
+        })
     }
 
     /**

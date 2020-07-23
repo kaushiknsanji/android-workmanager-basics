@@ -19,6 +19,7 @@ package com.example.background
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.work.*
 import com.example.background.workers.BlurWorker
 import com.example.background.workers.CleanupWorker
@@ -42,6 +43,9 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
     // Instance of WorkManager
     private val workManager = WorkManager.getInstance(application)
 
+    // LiveData for SaveToImageFileWorker's WorkInfo objects to retrieve its status and output Data
+    val outputWorkInfos: LiveData<List<WorkInfo>> = workManager.getWorkInfosByTagLiveData(TAG_OUTPUT)
+
     /**
      * Create the WorkRequest to apply the blur and save the resulting image
      *
@@ -59,7 +63,9 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
                 .build()
 
         // Create a one-off work request for saving the blurred image to MediaStore filesystem
-        val saveImageToFileRequest = OneTimeWorkRequest.from(SaveImageToFileWorker::class.java)
+        val saveImageToFileRequest = OneTimeWorkRequestBuilder<SaveImageToFileWorker>()
+                .addTag(TAG_OUTPUT) // Use Tag to get its status and output Data
+                .build()
 
         // Execute clean up first
         workManager.beginUniqueWork(
