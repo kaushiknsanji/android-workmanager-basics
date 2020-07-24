@@ -41,7 +41,10 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
     internal var outputUri: Uri? = null
 
     // Instance of WorkManager
-    private val workManager = WorkManager.getInstance(application)
+    private val workManager = WorkManager.getInstance(application).also {
+        // Clean any previously finished work information
+        it.pruneWork()
+    }
 
     // LiveData for SaveToImageFileWorker's WorkInfo objects to retrieve its status and output Data
     val outputWorkInfos: LiveData<List<WorkInfo>> = workManager.getWorkInfosByTagLiveData(TAG_OUTPUT)
