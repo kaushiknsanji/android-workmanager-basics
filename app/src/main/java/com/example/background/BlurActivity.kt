@@ -105,6 +105,12 @@ class BlurActivity : AppCompatActivity() {
                 }
             }
         })
+
+        // Register a click listener on the "Cancel" button
+        binding.cancelButton.setOnClickListener {
+            // Delegate to the ViewModel to cancel unfinished work
+            viewModel.cancelWork()
+        }
     }
 
     /**

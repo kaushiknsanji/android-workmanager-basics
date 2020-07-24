@@ -115,4 +115,14 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
             // Level of blur to be applied on the Image
             KEY_BLUR_LEVEL to blurLevel
     )
+
+    /**
+     * Called when the user clicks on the "Cancel" button to cancel the ongoing work.
+     * Issues cancellation of all the unfinished work identified by the
+     * [IMAGE_MANIPULATION_WORK_NAME] unique work chain.
+     */
+    internal fun cancelWork() {
+        workManager.cancelUniqueWork(IMAGE_MANIPULATION_WORK_NAME)
+    }
+
 }
