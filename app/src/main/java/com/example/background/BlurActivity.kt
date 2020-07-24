@@ -16,6 +16,7 @@
 
 package com.example.background
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
@@ -59,6 +60,18 @@ class BlurActivity : AppCompatActivity() {
             viewModel.applyBlur(blurLevel)
         }
 
+        // Register a click listener on the "See File" button
+        binding.seeFileButton.setOnClickListener {
+            // Create an Intent to view the Image pointed to by the Output URI saved in the ViewModel
+            Intent(Intent.ACTION_VIEW, viewModel.outputUri).let { actionViewIntent ->
+                // Check if there is any activity to handle this Intent
+                actionViewIntent.resolveActivity(packageManager)?.run {
+                    // When we have found an activity, start the activity with the Intent
+                    startActivity(actionViewIntent)
+                }
+            }
+        }
+
         // Register an observer on the SaveToImageFileWorker's WorkInfo objects LiveData to retrieve
         // its status and output Data
         viewModel.outputWorkInfos.observe(this, Observer { workInfos ->
@@ -74,6 +87,18 @@ class BlurActivity : AppCompatActivity() {
                     // When the work is finished (i.e., SUCCEEDED / FAILED / CANCELLED),
                     // show and hide the appropriate views for the same
                     showWorkFinished()
+
+                    // Read the final output Image URI string from the WorkInfo's Output Data
+                    workInfo.outputData.getString(KEY_IMAGE_URI)
+                            .takeIf { !it.isNullOrEmpty() }?.let { outputUriStr ->
+                                // When we have the final Image URI
+
+                                // Save the final Image URI string in the ViewModel
+                                viewModel.setOutputUri(outputUriStr)
+                                // Show the "See File" button
+                                binding.seeFileButton.visibility = View.VISIBLE
+                            }
+
                 } else {
                     // In other cases, show and hide the appropriate views for the same
                     showWorkInProgress()

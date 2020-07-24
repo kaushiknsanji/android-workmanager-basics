@@ -84,7 +84,7 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
      * @param uriString [String] instance containing the URI to a file.
      */
     private fun uriOrNull(uriString: String?): Uri? =
-            uriString.isNullOrEmpty().takeIf { !it }?.let { Uri.parse(uriString) }
+            uriString.takeIf { !it.isNullOrEmpty() }?.let { Uri.parse(it) }
 
     /**
      * Sets the [imageUri] to the Source Image file given by the [uri] String.
