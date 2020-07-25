@@ -65,9 +65,16 @@ class BlurViewModel(application: Application) : AndroidViewModel(application) {
                 .setInputData(createInputDataForUri(blurLevel))
                 .build()
 
+        // Configure charging constraint and available storage constraint for SaveImageToFileWorker
+        val saveImageToFileConstraints = Constraints.Builder()
+                .setRequiresCharging(true)
+                .setRequiresStorageNotLow(true)
+                .build()
+
         // Create a one-off work request for saving the blurred image to MediaStore filesystem
         val saveImageToFileRequest = OneTimeWorkRequestBuilder<SaveImageToFileWorker>()
                 .addTag(TAG_OUTPUT) // Use Tag to get its status and output Data
+                .setConstraints(saveImageToFileConstraints) // Add Constraints to be satisfied for Work
                 .build()
 
         // Execute clean up first
