@@ -34,11 +34,46 @@
             android:contentDescription="@string/description_image"
             android:scaleType="fitCenter" />
 
+        <TextView
+            android:id="@+id/filters_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/blur_title"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
+        <RadioGroup
+            android:id="@+id/radio_blur_group"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:checkedButton="@+id/radio_blur_lv_1"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/radio_blur_lv_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/blur_lv_1" />
+
+            <RadioButton
+                android:id="@+id/radio_blur_lv_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/blur_lv_2" />
+
+            <RadioButton
+                android:id="@+id/radio_blur_lv_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/blur_lv_3" />
+        </RadioGroup>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
             android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -78,48 +113,6 @@
             </LinearLayout>
 
         </LinearLayout>
-
-
-        <RadioGroup
-            android:id="@+id/destinations"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-        </RadioGroup>
-
-        <RadioGroup
-            android:id="@+id/radio_blur_group"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:checkedButton="@+id/radio_blur_lv_1"
-            android:orientation="vertical">
-
-            <RadioButton
-                android:id="@+id/radio_blur_lv_1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/blur_lv_1" />
-
-            <RadioButton
-                android:id="@+id/radio_blur_lv_2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/blur_lv_2" />
-
-            <RadioButton
-                android:id="@+id/radio_blur_lv_3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/blur_lv_3" />
-        </RadioGroup>
-
-        <TextView
-            android:id="@+id/filters_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/blur_title"
-            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
     </LinearLayout>
 
