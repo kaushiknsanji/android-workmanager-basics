@@ -1,60 +1,53 @@
-WorkManager Codelab
-===================================
+# WorkManager Basics
 
-This repository contains the code for the
-[WorkManager Codelab](https://codelabs.developers.google.com/codelabs/android-workmanager):
+**Blur-O-Matic** app built by following the instructions detailed in the Google Codelab **["Background Work with WorkManager"][WorkManager Basics Codelab]**. Original code by Google for this codelab can be referred [here][WorkManager Basics Repository].
 
-Java version
---------------
+## What one will learn
 
-The Java version of this codelab is available under the
-[`Java`](https://github.com/googlecodelabs/android-workmanager/tree/java) branch of this
-repository.
+* Adding WorkManager to the Project
+* Scheduling a `OneTimeWorkRequest`
+* Configuring Input and Output parameters of a `Worker`
+* Chaining WorkRequests together in order
+* Naming a Work Chain with a Unique Name and configuring existing Work Policy
+* Tagging WorkRequests and obtaining their `WorkInfo` to display its Work Status and read its Output `Data`
+* Cancelling WorkRequests
+* Configuring Constraints to a WorkRequest
 
-Introduction
-------------
+## What is not taught
 
-At I/O 2018 Google announced [Android Jetpack](https://developer.android.com//jetpack/),
-a collection of libraries, tools and architectural guidance to accelerate and simplify the
-development of great Android apps. One of those libraries is the
-[WorkManager library](https://developer.android.com/topic/libraries/architecture/workmanager/).
-The WorkManager library provides a unified API for deferrable one-off or recurring background tasks
-that need guaranteed execution. You can learn more by reading the
-[WorkManager Guide](https://developer.android.com/topic/libraries/architecture/workmanager/), the
-[WorkManager Reference](https://developer.android.com/reference/androidx/work/package-summary)
-or doing the
-[WorkManager Codelab](https://codelabs.developers.google.com/codelabs/android-workmanager).
+Advanced stuff like:
+* Periodic Work requests
+* Testing support library
+* Parallel Work requests
+* Input Mergers
+* CoroutineWorker
+* Threading in Workers
 
-Pre-requisites
---------------
+## Getting Started
 
-* Android Studio 3.6 or later and you know how to use it.
+* Android Studio 3.6 or higher with updated SDK and Gradle.
+* Android device or emulator running API level 14+.
 
-* Make sure Android Studio is updated, as well as your SDK and Gradle.
-Otherwise, you may have to wait for a while until all the updates are done.
-
-* A device or emulator that runs API level 16+
-
-You need to be solidly familiar with the Kotlin programming language,
-object-oriented design concepts, and Android Development Fundamentals.
-In particular:
-
+### Prerequisites
+* Familiarity with the Kotlin programming language, object-oriented design concepts and Android Development Fundamentals
 * Basic layouts, widgets and [View Bindings](https://d.android.com/topic/libraries/view-binding)
 * Some familiarity with Uris and File I/O
-* Familiarity with [LiveData](https://developer.android.com/topic/libraries/architecture/livedata)
-  and [ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel)
+* Familiarity with [LiveData](https://developer.android.com/topic/libraries/architecture/livedata) and [ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel)
 
-Getting Started
----------------
+## Branches in this Repository
 
-1. [Install Android Studio](https://developer.android.com/studio/install.html),
-if you don't already have it.
-2. Download the sample.
-2. Import the sample into Android Studio.
-3. Build and run the sample.
+* **[starter-code-kotlin](https://github.com/kaushiknsanji/android-workmanager-basics/tree/starter-code-kotlin)**
+	* This is the Starter code for the [codelab][WorkManager Basics Codelab].
+* **[master](https://github.com/kaushiknsanji/android-workmanager-basics/tree/master)**
+	* This contains the Solution for the [codelab][WorkManager Basics Codelab].
+    * In comparison with the original [repository][WorkManager Basics Repository], this repository contains additional modifications and corrections-
+		* Any previously finished work is cleared from WorkManager when it is first initialized to avoid showing the **"See File"** button when the `BlurActivity` is launched - [commit](https://github.com/kaushiknsanji/android-workmanager-basics/commits/master/bf6fe88d15a7bef56c12bf8e3ee80a32717c29ea).
+		* Applying repeated blur for the chosen `blurLevel` is carried out in the [BlurWorker](https://github.com/kaushiknsanji/android-workmanager-basics/blob/b9fc18ea4c3982df57a7bd6250dc53ee348b27b5/app/src/main/java/com/example/background/workers/WorkerUtils.kt#L94-L171).
+		* Logic for clearing temporary blurred image files is placed in the [BlurWorker](https://github.com/kaushiknsanji/android-workmanager-basics/blob/b9fc18ea4c3982df57a7bd6250dc53ee348b27b5/app/src/main/java/com/example/background/workers/WorkerUtils.kt#L202-L225).
+		* Logic for saving the final blurred image to MediaStore filesystem is placed in the [BlurWorker](https://github.com/kaushiknsanji/android-workmanager-basics/blob/b9fc18ea4c3982df57a7bd6250dc53ee348b27b5/app/src/main/java/com/example/background/workers/WorkerUtils.kt#L227-L261).
+		* Other minor changes to maintain idiomatic Kotlin usage.
 
-License
--------
+## License
 
 Copyright 2018 Google, Inc.
 
@@ -75,4 +68,8 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
 License for the specific language governing permissions and limitations under
-the License.
+the License.		
+
+<!-- Reference Style Links are to be placed after this -->
+[WorkManager Basics Codelab]: https://codelabs.developers.google.com/codelabs/android-workmanager/index.html
+[WorkManager Basics Repository]: https://github.com/googlecodelabs/android-workmanager/tree/kotlin
