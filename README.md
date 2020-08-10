@@ -38,6 +38,7 @@ Advanced stuff like:
 
 * **[starter-code-kotlin](https://github.com/kaushiknsanji/android-workmanager-basics/tree/starter-code-kotlin)**
 	* This is the Starter code for the [codelab][WorkManager Basics Codelab].
+	* Minor changes to maintain idiomatic Kotlin usage.
 * **[master](https://github.com/kaushiknsanji/android-workmanager-basics/tree/master)**
 	* This contains the Solution for the [codelab][WorkManager Basics Codelab].
     * In comparison with the original [repository][WorkManager Basics Repository], this repository contains additional modifications and corrections-
